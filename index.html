@@ -11,14 +11,14 @@
   </style>
 </head>
 <body>
-  <h2>Intraday Stock Simulator (Live from Yahoo Finance)</h2>
+  <h2>Intraday Stock Simulator (Live from StockData.org)</h2>
 
   <label>
     Amount to Invest (INR): <input type="number" id="amount" />
   </label>
   <label>
-    Stock Symbol (e.g., INFY.NS, RELIANCE.BO):
-    <input type="text" id="stock" value="RELIANCE.BO" />
+    Stock Symbol (e.g., AAPL, TSLA, INFY):
+    <input type="text" id="stock" value="AAPL" />
   </label>
   <button onclick="invest()">Invest</button>
   <button onclick="withdraw()">Withdraw</button>
@@ -41,18 +41,25 @@
     const positions = [];
 
     async function fetchStockPrice(symbol) {
-      const url = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${symbol}`;
+      const url = `https://api.stockdata.org/v1/data/quote?symbols=${symbol}`;
       const response = await fetch(url);
       const data = await response.json();
-      return parseFloat(data.quoteResponse.result[0].regularMarketPrice);
+      if (data && data.data && data.data.length > 0) {
+        return parseFloat(data.data[0].price);
+      } else {
+        alert('Error fetching price. Check symbol or try again.');
+        return 0;
+      }
     }
 
     async function invest() {
       const amount = parseFloat(document.getElementById('amount').value);
       const symbol = document.getElementById('stock').value.toUpperCase();
       const entryPrice = await fetchStockPrice(symbol);
-      const quantity = amount / entryPrice;
-      positions.push({ symbol, entryPrice, quantity, invested: amount });
+      if (entryPrice > 0) {
+        const quantity = amount / entryPrice;
+        positions.push({ symbol, entryPrice, quantity, invested: amount });
+      }
     }
 
     function withdraw() {
