@@ -8,7 +8,8 @@
     table { border-collapse: collapse; width: 100%; }
     th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
     th { background-color: #f4f4f4; }
-    #stock { max-height: 150px; overflow-y: auto; width: 250px; display: block; }
+    #stock-container { position: relative; display: inline-block; }
+    #stock { width: 300px; max-height: 200px; overflow-y: auto; display: block; }
   </style>
 </head>
 <body>
@@ -17,10 +18,10 @@
   <label>
     Amount to Invest (INR): <input type="number" id="amount" />
   </label>
-  <label>
-    Stock Symbol:
-    <select id="stock" size="10"></select>
-  </label>
+  <div id="stock-container">
+    <label for="stock">Stock Symbol:</label>
+    <select id="stock" onclick="populateDropdown()"></select>
+  </div>
   <label>
     <input type="checkbox" id="allowSimulation" /> Simulate even if market is closed
   </label>
@@ -44,12 +45,13 @@
   <script>
     const API_KEY = 'd051ahpr01qrsogupgu0d051ahpr01qrsogupgug';
     const positions = [];
+    let stockFetched = false;
 
     async function fetchAllStocks() {
       try {
         const res = await fetch(`https://finnhub.io/api/v1/stock/symbol?exchange=NSE&token=${API_KEY}`);
         const data = await res.json();
-        return data.filter(stock => stock.symbol.endsWith('.NS')).slice(0, 100); // limit to 100 NSE symbols
+        return data.filter(stock => stock.symbol.endsWith('.NS'));
       } catch (err) {
         console.error('Failed to fetch stock list', err);
         return [];
@@ -57,6 +59,8 @@
     }
 
     async function populateDropdown() {
+      if (stockFetched) return;
+      stockFetched = true;
       const dropdown = document.getElementById('stock');
       dropdown.innerHTML = '';
       const stockList = await fetchAllStocks();
@@ -141,8 +145,7 @@
       }
     }
 
-    setInterval(updateSummary, 10000); // Update every 10 seconds
-    populateDropdown(); // Load dropdown on page load
+    setInterval(updateSummary, 10000);
   </script>
 </body>
 </html>
