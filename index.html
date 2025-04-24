@@ -57,7 +57,7 @@
       const dropdown = document.getElementById('stock');
       dropdown.innerHTML = '<option disabled selected>Loading stocks...</option>';
       try {
-        const res = await fetch('https://raw.githubusercontent.com/datasets/nse-stocks/master/data/nse_stocks.json');
+        const res = await fetch('https://corsproxy.io/?https://raw.githubusercontent.com/datasets/nse-stocks/master/data/nse_stocks.json');
         const data = await res.json();
         dropdown.innerHTML = '';
         data.forEach(stock => {
