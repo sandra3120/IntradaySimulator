@@ -1,13 +1,91 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Intraday Simulator</title>
+  <meta charset="UTF-8">
+  <title>Intraday Stock Simulator (Live)</title>
+  <style>
+    body { font-family: Arial; padding: 20px; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+    th { background-color: #f4f4f4; }
+  </style>
 </head>
 <body>
-  <h1>Intraday Stock Simulation</h1>
-  <p>This is a dummy frontend for demo purposes. The real logic runs in Python.</p>
-  <pre>
-    Run `simulator.py` locally to simulate intraday trading.
-  </pre>
+  <h2>Intraday Stock Simulator (Live from Yahoo Finance)</h2>
+
+  <label>
+    Amount to Invest (INR): <input type="number" id="amount" />
+  </label>
+  <label>
+    Stock Symbol (e.g., INFY.NS, RELIANCE.BO):
+    <input type="text" id="stock" value="RELIANCE.BO" />
+  </label>
+  <button onclick="invest()">Invest</button>
+  <button onclick="withdraw()">Withdraw</button>
+
+  <h3>Live Summary</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Stock</th>
+        <th>Quantity</th>
+        <th>Entry Price</th>
+        <th>Current Price</th>
+        <th>PnL (₹)</th>
+      </tr>
+    </thead>
+    <tbody id="summary-body"></tbody>
+  </table>
+
+  <script>
+    const positions = [];
+
+    async function fetchStockPrice(symbol) {
+      const url = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${symbol}`;
+      const response = await fetch(url);
+      const data = await response.json();
+      return parseFloat(data.quoteResponse.result[0].regularMarketPrice);
+    }
+
+    async function invest() {
+      const amount = parseFloat(document.getElementById('amount').value);
+      const symbol = document.getElementById('stock').value.toUpperCase();
+      const entryPrice = await fetchStockPrice(symbol);
+      const quantity = amount / entryPrice;
+      positions.push({ symbol, entryPrice, quantity, invested: amount });
+    }
+
+    function withdraw() {
+      const symbol = document.getElementById('stock').value.toUpperCase();
+      for (let i = positions.length - 1; i >= 0; i--) {
+        if (positions[i].symbol === symbol) {
+          positions.splice(i, 1);
+        }
+      }
+    }
+
+    async function updateSummary() {
+      const tbody = document.getElementById('summary-body');
+      tbody.innerHTML = '';
+
+      for (const pos of positions) {
+        const currPrice = await fetchStockPrice(pos.symbol);
+        const currVal = pos.quantity * currPrice;
+        const pnl = currVal - pos.invested;
+
+        const row = `<tr>
+          <td>${pos.symbol}</td>
+          <td>${pos.quantity.toFixed(2)}</td>
+          <td>₹${pos.entryPrice.toFixed(2)}</td>
+          <td>₹${currPrice.toFixed(2)}</td>
+          <td style="color:${pnl >= 0 ? 'green' : 'red'}">₹${pnl.toFixed(2)}</td>
+        </tr>`;
+
+        tbody.insertAdjacentHTML('beforeend', row);
+      }
+    }
+
+    setInterval(updateSummary, 10000); // Update every 10 seconds
+  </script>
 </body>
 </html>
