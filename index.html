@@ -20,7 +20,7 @@
   </label>
   <div id="stock-container">
     <label for="stock">Stock Symbol:</label>
-    <select id="stock" onclick="populateDropdown()"></select>
+    <select id="stock"></select>
   </div>
   <label>
     <input type="checkbox" id="allowSimulation" /> Simulate even if market is closed
@@ -45,7 +45,6 @@
   <script>
     const API_KEY = 'd051ahpr01qrsogupgu0d051ahpr01qrsogupgug';
     const positions = [];
-    let stockFetched = false;
 
     async function fetchAllStocks() {
       try {
@@ -59,11 +58,10 @@
     }
 
     async function populateDropdown() {
-      if (stockFetched) return;
-      stockFetched = true;
       const dropdown = document.getElementById('stock');
-      dropdown.innerHTML = '';
+      dropdown.innerHTML = '<option disabled selected>Loading symbols...</option>';
       const stockList = await fetchAllStocks();
+      dropdown.innerHTML = '';
       stockList.forEach(stock => {
         const option = document.createElement('option');
         option.value = stock.symbol;
@@ -146,6 +144,7 @@
     }
 
     setInterval(updateSummary, 10000);
+    window.onload = populateDropdown;
   </script>
 </body>
 </html>
