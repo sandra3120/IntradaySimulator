@@ -22,6 +22,7 @@
       cursor: pointer;
     }
     h2, h3 { text-align: center; }
+    #errorMsg { color: red; text-align: center; font-weight: bold; margin-top: 10px; }
   </style>
 </head>
 <body>
@@ -34,6 +35,8 @@
     <button onclick="invest()">Invest</button>
     <button onclick="withdraw()">Withdraw</button>
   </div>
+
+  <div id="errorMsg"></div>
 
   <h3>Live Summary</h3>
   <table>
@@ -53,17 +56,24 @@
     const positions = [];
 
     async function fetchYahooPrice(symbol) {
+      const errorBox = document.getElementById('errorMsg');
+      errorBox.innerText = '';
       try {
         const url = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${symbol}`;
         const proxy = `https://corsproxy.io/?${encodeURIComponent(url)}`;
         const res = await fetch(proxy);
         const data = await res.json();
-        if (!data.quoteResponse || !data.quoteResponse.result || data.quoteResponse.result.length === 0) {
-          throw new Error("Invalid symbol or no data returned");
+        const result = data.quoteResponse.result[0];
+        if (!result || !result.regularMarketPrice) {
+          throw new Error('Invalid symbol or no data returned');
         }
-        return parseFloat(data.quoteResponse.result[0].regularMarketPrice);
+        if (result.marketState) {
+          errorBox.innerText = `Market is currently: ${result.marketState}`;
+        }
+        return parseFloat(result.regularMarketPrice);
       } catch (err) {
         console.error('Error fetching price:', err);
+        errorBox.innerText = 'Error fetching price. Check the symbol or try again later.';
         return 0;
       }
     }
@@ -71,9 +81,12 @@
     async function invest() {
       const amount = parseFloat(document.getElementById('amount').value);
       const symbol = document.getElementById('stockInput').value.toUpperCase();
-      if (!amount || amount <= 0 || !symbol) return alert("Enter a valid amount and stock symbol (e.g. INFY.NS)");
+      if (!amount || amount <= 0 || !symbol) {
+        document.getElementById('errorMsg').innerText = "Enter a valid amount and stock symbol (e.g. INFY.NS)";
+        return;
+      }
       const entryPrice = await fetchYahooPrice(symbol);
-      if (entryPrice <= 0) return alert("Unable to fetch price. Please check the symbol.");
+      if (entryPrice <= 0) return;
       const quantity = amount / entryPrice;
       positions.push({ symbol, entryPrice, quantity, invested: amount });
       updateSummary();
