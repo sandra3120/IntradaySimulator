@@ -17,8 +17,8 @@
     Amount to Invest (INR): <input type="number" id="amount" />
   </label>
   <label>
-    Stock Symbol (e.g., INFY.NS, TCS.NS):
-    <input type="text" id="stock" value="INFY.NS" />
+    Stock Symbol:
+    <select id="stock" onclick="populateDropdown()"></select>
   </label>
   <button onclick="invest()">Invest</button>
   <button onclick="withdraw()">Withdraw</button>
@@ -40,6 +40,28 @@
   <script>
     const API_KEY = 'd051ahpr01qrsogupgu0d051ahpr01qrsogupgug';
     const positions = [];
+
+    const stockList = [
+      { symbol: "INFY.NS", name: "Infosys" },
+      { symbol: "TCS.NS", name: "Tata Consultancy" },
+      { symbol: "RELIANCE.NS", name: "Reliance Industries" },
+      { symbol: "HDFCBANK.NS", name: "HDFC Bank" },
+      { symbol: "SBIN.NS", name: "State Bank of India" },
+      { symbol: "ICICIBANK.NS", name: "ICICI Bank" },
+      { symbol: "HINDUNILVR.NS", name: "Hindustan Unilever" },
+      { symbol: "ITC.NS", name: "ITC Ltd" }
+    ];
+
+    function populateDropdown() {
+      const dropdown = document.getElementById('stock');
+      dropdown.innerHTML = '';
+      stockList.forEach(stock => {
+        const option = document.createElement('option');
+        option.value = stock.symbol;
+        option.text = `${stock.symbol} (${stock.name})`;
+        dropdown.appendChild(option);
+      });
+    }
 
     async function fetchStockPrice(symbol) {
       const url = `https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${API_KEY}`;
@@ -94,6 +116,7 @@
     }
 
     setInterval(updateSummary, 10000); // Update every 10 seconds
+    populateDropdown(); // Initial load
   </script>
 </body>
 </html>
