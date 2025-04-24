@@ -60,8 +60,9 @@
       const dropdown = document.getElementById('stock');
       dropdown.innerHTML = '<option disabled selected>Loading stocks...</option>';
       try {
-        const res = await fetch('https://cdn.jsdelivr.net/gh/abhishekjha786/nse-stock-list@main/nse_stocks.json');
-        const data = await res.json();
+        const res = await fetch('https://api.jsonbin.io/v3/b/661d5a4ae41b4d34e4e6e4f7/latest');
+        const json = await res.json();
+        const data = json.record;
         fullStockList = data.map(stock => ({
           symbol: `${stock.SYMBOL}.NS`,
           name: stock["NAME OF COMPANY"]
