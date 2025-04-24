@@ -54,9 +54,13 @@
 
     async function fetchYahooPrice(symbol) {
       try {
-        const res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent('https://query1.finance.yahoo.com/v7/finance/quote?symbols=')}${symbol}`);
-        const wrapper = await res.json();
-        const data = JSON.parse(wrapper.contents);
+        const url = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${symbol}`;
+        const proxy = `https://corsproxy.io/?${encodeURIComponent(url)}`;
+        const res = await fetch(proxy);
+        const data = await res.json();
+        if (!data.quoteResponse || !data.quoteResponse.result || data.quoteResponse.result.length === 0) {
+          throw new Error("Invalid symbol or no data returned");
+        }
         return parseFloat(data.quoteResponse.result[0].regularMarketPrice);
       } catch (err) {
         console.error('Error fetching price:', err);
