@@ -8,6 +8,7 @@
     table { border-collapse: collapse; width: 100%; }
     th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
     th { background-color: #f4f4f4; }
+    #stock { max-height: 150px; overflow-y: auto; width: 250px; display: block; }
   </style>
 </head>
 <body>
@@ -18,7 +19,10 @@
   </label>
   <label>
     Stock Symbol:
-    <select id="stock" onclick="populateDropdown()"></select>
+    <select id="stock" size="10"></select>
+  </label>
+  <label>
+    <input type="checkbox" id="allowSimulation" /> Simulate even if market is closed
   </label>
   <button onclick="invest()">Invest</button>
   <button onclick="withdraw()">Withdraw</button>
@@ -41,24 +45,25 @@
     const API_KEY = 'd051ahpr01qrsogupgu0d051ahpr01qrsogupgug';
     const positions = [];
 
-    const stockList = [
-      { symbol: "INFY.NS", name: "Infosys" },
-      { symbol: "TCS.NS", name: "Tata Consultancy" },
-      { symbol: "RELIANCE.NS", name: "Reliance Industries" },
-      { symbol: "HDFCBANK.NS", name: "HDFC Bank" },
-      { symbol: "SBIN.NS", name: "State Bank of India" },
-      { symbol: "ICICIBANK.NS", name: "ICICI Bank" },
-      { symbol: "HINDUNILVR.NS", name: "Hindustan Unilever" },
-      { symbol: "ITC.NS", name: "ITC Ltd" }
-    ];
+    async function fetchAllStocks() {
+      try {
+        const res = await fetch(`https://finnhub.io/api/v1/stock/symbol?exchange=NSE&token=${API_KEY}`);
+        const data = await res.json();
+        return data.filter(stock => stock.symbol.endsWith('.NS')).slice(0, 100); // limit to 100 NSE symbols
+      } catch (err) {
+        console.error('Failed to fetch stock list', err);
+        return [];
+      }
+    }
 
-    function populateDropdown() {
+    async function populateDropdown() {
       const dropdown = document.getElementById('stock');
       dropdown.innerHTML = '';
+      const stockList = await fetchAllStocks();
       stockList.forEach(stock => {
         const option = document.createElement('option');
         option.value = stock.symbol;
-        option.text = `${stock.symbol} (${stock.name})`;
+        option.text = `${stock.symbol} (${stock.description})`;
         dropdown.appendChild(option);
       });
     }
@@ -70,9 +75,14 @@
         const data = await response.json();
 
         if (data && typeof data.c === 'number') {
+          const allowSim = document.getElementById('allowSimulation').checked;
           if (data.c === 0) {
-            alert(`Market is likely closed. Last traded price is ₹${data.pc}. Do you want to simulate based on that?`);
-            return parseFloat(data.pc);
+            if (allowSim && data.pc) {
+              return parseFloat(data.pc);
+            } else {
+              alert(`Market is likely closed. Enable simulation to use last price.`);
+              return 0;
+            }
           }
           return parseFloat(data.c);
         } else {
@@ -90,10 +100,12 @@
     async function invest() {
       const amount = parseFloat(document.getElementById('amount').value);
       const symbol = document.getElementById('stock').value.toUpperCase();
+      if (!amount || amount <= 0 || !symbol) return alert("Enter a valid amount and select a stock");
       const entryPrice = await fetchStockPrice(symbol);
       if (entryPrice > 0) {
         const quantity = amount / entryPrice;
         positions.push({ symbol, entryPrice, quantity, invested: amount });
+        updateSummary();
       }
     }
 
@@ -104,6 +116,7 @@
           positions.splice(i, 1);
         }
       }
+      updateSummary();
     }
 
     async function updateSummary() {
@@ -112,6 +125,7 @@
 
       for (const pos of positions) {
         const currPrice = await fetchStockPrice(pos.symbol);
+        if (!currPrice) continue;
         const currVal = pos.quantity * currPrice;
         const pnl = currVal - pos.invested;
 
@@ -128,7 +142,7 @@
     }
 
     setInterval(updateSummary, 10000); // Update every 10 seconds
-    populateDropdown(); // Initial load
+    populateDropdown(); // Load dropdown on page load
   </script>
 </body>
 </html>
