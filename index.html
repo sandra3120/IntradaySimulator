@@ -39,8 +39,9 @@
 
     async function fetchYahooPrice(symbol) {
       try {
-        const res = await fetch(`https://corsproxy.io/?https://query1.finance.yahoo.com/v7/finance/quote?symbols=${symbol}`);
-        const data = await res.json();
+        const res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent('https://query1.finance.yahoo.com/v7/finance/quote?symbols=')}${symbol}`);
+        const wrapper = await res.json();
+        const data = JSON.parse(wrapper.contents);
         return parseFloat(data.quoteResponse.result[0].regularMarketPrice);
       } catch (err) {
         console.error('Error fetching price:', err);
