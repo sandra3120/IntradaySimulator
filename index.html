@@ -11,14 +11,14 @@
   </style>
 </head>
 <body>
-  <h2>Intraday Stock Simulator (Live from StockData.org)</h2>
+  <h2>Intraday Stock Simulator (Live from Finnhub API)</h2>
 
   <label>
     Amount to Invest (INR): <input type="number" id="amount" />
   </label>
   <label>
-    Stock Symbol (e.g., AAPL, TSLA, INFY):
-    <input type="text" id="stock" value="AAPL" />
+    Stock Symbol (e.g., INFY.NS, TCS.NS):
+    <input type="text" id="stock" value="INFY.NS" />
   </label>
   <button onclick="invest()">Invest</button>
   <button onclick="withdraw()">Withdraw</button>
@@ -38,14 +38,15 @@
   </table>
 
   <script>
+    const API_KEY = 'd051ahpr01qrsogupgu0d051ahpr01qrsogupgug';
     const positions = [];
 
     async function fetchStockPrice(symbol) {
-      const url = `https://api.stockdata.org/v1/data/quote?symbols=${symbol}`;
+      const url = `https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${API_KEY}`;
       const response = await fetch(url);
       const data = await response.json();
-      if (data && data.data && data.data.length > 0) {
-        return parseFloat(data.data[0].price);
+      if (data && data.c) {
+        return parseFloat(data.c);
       } else {
         alert('Error fetching price. Check symbol or try again.');
         return 0;
