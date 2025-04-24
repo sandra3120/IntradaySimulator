@@ -64,13 +64,25 @@
     }
 
     async function fetchStockPrice(symbol) {
-      const url = `https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${API_KEY}`;
-      const response = await fetch(url);
-      const data = await response.json();
-      if (data && data.c) {
-        return parseFloat(data.c);
-      } else {
-        alert('Error fetching price. Check symbol or try again.');
+      try {
+        const url = `https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${API_KEY}`;
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (data && typeof data.c === 'number') {
+          if (data.c === 0) {
+            alert(`Market is likely closed. Last traded price is ₹${data.pc}. Do you want to simulate based on that?`);
+            return parseFloat(data.pc);
+          }
+          return parseFloat(data.c);
+        } else {
+          console.warn(`Invalid price returned for ${symbol}`, data);
+          alert(`Error: Symbol "${symbol}" may be invalid or unavailable.`);
+          return 0;
+        }
+      } catch (error) {
+        console.error('Fetch error:', error);
+        alert('Failed to fetch stock data. Please check your internet connection or try again later.');
         return 0;
       }
     }
